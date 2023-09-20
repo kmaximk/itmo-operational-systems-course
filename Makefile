@@ -110,7 +110,11 @@ $U/initcode: $U/initcode.S
 tags: $(OBJS) _init
 	etags *.S *.c
 
-ULIB = $U/ulib.o $U/usys.o $U/printf.o $U/umalloc.o
+ULIB = $U/ulib.o $U/usys.o $U/printf.o $U/umalloc.o $U/dumptests_asm.o $U/dump2tests_asm.o
+
+# Add force dependency on syscall.h
+$U/%.o: $U/%.c $K/syscall.h
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 _%: %.o $(ULIB)
 	$(LD) $(LDFLAGS) -T $U/user.ld -o $@ $^
@@ -122,6 +126,12 @@ $U/usys.S : $U/usys.pl
 
 $U/usys.o : $U/usys.S
 	$(CC) $(CFLAGS) -c -o $U/usys.o $U/usys.S
+
+$U/dumptests_asm.o : $U/dumptests.S
+	$(CC) $(CFLAGS) -c -o $U/dumptests_asm.o $U/dumptests.S
+
+$U/dump2tests_asm.o : $U/dump2tests.S
+	$(CC) $(CFLAGS) -c -o $U/dump2tests_asm.o $U/dump2tests.S
 
 $U/_forktest: $U/forktest.o $(ULIB)
 	# forktest has less library code linked in - needs to be small
@@ -155,6 +165,8 @@ UPROGS=\
 	$U/_grind\
 	$U/_wc\
 	$U/_zombie\
+	$U/_dumptests\
+	$U/_dump2tests
 
 fs.img: mkfs/mkfs xv6-readme $(UPROGS)
 	mkfs/mkfs fs.img xv6-readme $(UPROGS)
