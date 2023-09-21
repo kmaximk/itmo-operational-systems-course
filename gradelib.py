@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import sys, os, re, time, socket, select, subprocess, errno, shutil, random, string, json
 from subprocess import Popen
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 from optparse import OptionParser
 
 __all__ = []
@@ -21,7 +21,7 @@ GRADES = {}
 
 class Test:
     __name__: str
-    parent: "Test" | None
+    parent: Optional["Test"]
     fn: Callable[[], None]
     points: int
     title: str
@@ -29,7 +29,7 @@ class Test:
     ok: bool
     finish: list[Callable[[str | None], None]]
 
-    def __init__(self, fn: Callable[[], None], points: int, title: str | None = None, parent: "Test" | None = None):
+    def __init__(self, fn: Callable[[], None], points: int, title: str | None = None, parent: Optional["Test"] = None):
         self.__name__ = fn.__name__
         self.points = points
 
@@ -41,11 +41,15 @@ class Test:
 
         if parent:
             self.title = "  " + self.title
+            self.parent = parent
+        else:
+            self.parent = None
 
         self.fn = fn
         self.complete = False
         self.ok = False
         self.on_finish = []
+        TESTS.append(self)
 
     def __call__(self) -> bool:
         global TOTAL, POSSIBLE, CURRENT_TEST, GRADES
