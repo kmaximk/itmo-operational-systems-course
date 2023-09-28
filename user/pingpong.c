@@ -16,7 +16,7 @@ void read_from_pipe(char *buf, int fd) {
 }
 
 void write_to_pipe(char *msg, int fd) {
-  if (write(fd, msg, sizeof(msg)) < sizeof(msg)) {
+  if (write(fd, msg, strlen(msg)) < strlen(msg)) {
     fprintf(2, "Error when writing\n");
     exit(1);
   }
