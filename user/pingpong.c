@@ -28,7 +28,8 @@ int main(int argc, char *argv[]) {
     close(fd1[1]);
     close(fd2[0]);
     read_from_pipe(buf, fd1[0]);
-    if (write(fd2[1], "pong\n", sizeof("pong\n")) < sizeof("pong\n")) {
+    char msg[5] = "pong\n";
+    if (write(fd2[1], msg, sizeof(msg)) < sizeof(msg)) {
       fprintf(2, "Error when writing\n");
       exit(1);
     }
@@ -37,7 +38,8 @@ int main(int argc, char *argv[]) {
   } else if (pid > 0) {
     close(fd2[1]);
     close(fd1[0]);
-    if (write(fd1[1], "ping\n", sizeof("ping\n")) < sizeof("ping\n")) {
+    char msg[5] = "ping\n";
+    if (write(fd1[1], msg, sizeof(msg)) < sizeof(msg)) {
       fprintf(2, "Error when writing\n");
       exit(1);
     }
