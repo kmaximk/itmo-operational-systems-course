@@ -621,7 +621,7 @@ void dump(void) {
     printf("%d ", *curr);
     curr++;
   }
-  printf("\n");
+  //printf("\n");
 }
 
 int dump2(int pid, int register_num, uint64 return_value) {
