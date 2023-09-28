@@ -14,7 +14,9 @@ sub entry {
     print " ecall\n";
     print " ret\n";
 }
-	
+
+entry("dump2");
+entry("dump");
 entry("fork");
 entry("exit");
 entry("wait");

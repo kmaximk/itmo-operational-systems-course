@@ -2,6 +2,7 @@
 
 #include "constants.h"
 #include "defs.h"
+#include "limits.h"
 #include "memlayout.h"
 #include "param.h"
 #include "riscv.h"
@@ -612,4 +613,44 @@ void procdump(void) {
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+void dump(void) {
+  uint64 *curr = &myproc()->trapframe->s2;
+  printf("[DEBUG] ");
+  for (int i = 0; i < 10; i++) {
+    printf("%d ", *curr);
+    curr++;
+  }
+  printf("\n");
+}
+
+int dump2(int pid, int register_num, uint64 return_value) {
+  if (register_num < 2 || register_num > 11) {
+    return -3;
+  }
+  struct proc *pr = myproc();
+  struct proc *curr;
+  int found = 0;
+  for (curr = proc; curr < &proc[NPROC]; curr++) {
+    if (curr->pid == pid) {
+      found = 1;
+      break;
+    }
+  }
+  if (found != 0) {
+    uint64 reg = *(&curr->trapframe->s2 + (register_num - 2));
+    while (curr->pid != initproc->pid && curr->pid != pr->pid) {
+      curr = curr->parent;
+    }
+    if (curr->pid == initproc->pid && initproc->pid != pr->pid) {
+      return -1;
+    }
+    if (copyout(pr->pagetable, return_value, (char *)&reg, 8) == -1) {
+      return -4;
+    }
+  } else {
+    return -2;
+  }
+  return 0;
 }

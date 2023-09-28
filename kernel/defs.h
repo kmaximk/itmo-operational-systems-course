@@ -83,6 +83,8 @@ void panic(char *) __attribute__((noreturn));
 void printfinit(void);
 
 // proc.c
+int dump2(int, int, uint64);
+void dump(void);
 int cpuid(void);
 void exit(int);
 int fork(void);

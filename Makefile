@@ -166,7 +166,8 @@ UPROGS=\
 	$U/_wc\
 	$U/_zombie\
 	$U/_dumptests\
-	$U/_dump2tests
+	$U/_dump2tests\
+	$U/_pingpong
 
 fs.img: mkfs/mkfs xv6-readme $(UPROGS)
 	mkfs/mkfs fs.img xv6-readme $(UPROGS)

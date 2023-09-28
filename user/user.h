@@ -6,6 +6,8 @@
 struct stat;
 
 // system calls
+uint64 dump2(int, int, uint64*);
+void dump(void);
 int fork(void);
 int exit(int) __attribute__((noreturn));
 int wait(int *);
