@@ -66,12 +66,10 @@ uint64 sys_uptime(void) {
   return xticks;
 }
 
-
 uint64 sys_dump(void) {
   dump();
   return 0;
 }
-
 
 uint64 sys_dump2(void) {
   int pid, register_num;
