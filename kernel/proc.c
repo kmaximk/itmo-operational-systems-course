@@ -642,10 +642,12 @@ int dump2(int pid, int register_num, uint64 return_value) {
   }
   if (found != 0) {
     uint64 reg = *(&curr->trapframe->s2 + (register_num - 2));
-    while (curr->pid != initproc->pid && curr->pid != pr->pid) {
+    acquire(&wait_lock);
+    while (curr != initproc && curr != pr) {
       curr = curr->parent;
     }
-    if (curr->pid == initproc->pid && initproc->pid != pr->pid) {
+    release(&wait_lock);
+    if (curr == initproc && initproc != pr) {
       return -1;
     }
     if (copyout(pr->pagetable, return_value, (char *)&reg, 8) == -1) {
