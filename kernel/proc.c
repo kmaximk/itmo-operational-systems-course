@@ -618,9 +618,13 @@ void dump(void) {
   uint64 *curr = &myproc()->trapframe->s2;
   printf("[DEBUG] ");
   for (int i = 0; i < 10; i++) {
-    printf("%d ", *curr);
+    printf("%d", *curr);
+    if (i != 9) {
+      printf(" ");
+    }
     curr++;
   }
+  printf("\n");
 }
 
 int dump2(int pid, int register_num, uint64 return_value) {
