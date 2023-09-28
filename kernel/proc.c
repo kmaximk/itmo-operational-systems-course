@@ -2,7 +2,6 @@
 
 #include "constants.h"
 #include "defs.h"
-#include "limits.h"
 #include "memlayout.h"
 #include "param.h"
 #include "riscv.h"
