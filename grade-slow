@@ -15,6 +15,6 @@ def test_usertests():
 
     free_pages_lost = re.findall(r'Lost some free pages: \d+ out of \d+', r.qemu.output, re.MULTILINE)
     if len(free_pages_lost) > 0:
-        print(f"::warning title=usertests::{free_pages_lost[0]}")
+        print(f"\n::warning file=kernel/proc.c::{free_pages_lost[0]}")
 
 run_tests()
