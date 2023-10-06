@@ -1,41 +1,61 @@
-// Test that fork fails gracefully.
-// Tiny executable so that the limit can be filling the proc table.
+// Test that system is able to allocate at least 2560 processes and exit
+// gracefully.
 
 #include "user/user.h"
 
-#define N 1000
-
-void print(const char *s) { write(1, s, strlen(s)); }
+#define N 4096
+#define NMIN 2560
 
 void forktest(void) {
   int n, pid;
 
-  print("fork test\n");
+  int fd[2];
+  char buf[1];
+  if (pipe(fd) != 0) {
+    printf("pipe() failed\n");
+    exit(1);
+  }
+
+  printf("fork test\n");
 
   for (n = 0; n < N; n++) {
     pid = fork();
     if (pid < 0) break;
-    if (pid == 0) exit(0);
+    if (pid == 0) {
+      close(fd[1]);
+      read(fd[0], buf, 1);
+      exit(0);
+    }
   }
 
+  close(fd[0]);
+  close(fd[1]);
+
   if (n == N) {
-    print("fork claimed to work N times!\n");
+    // 4096 processes take more space than available RAM
+    printf("fork claimed to work %d times!\n", N);
+    exit(1);
+  }
+
+  printf("forked %d processes\n", n);
+  if (n < NMIN) {
+    printf("- not enough\n");
     exit(1);
   }
 
   for (; n > 0; n--) {
     if (wait(0) < 0) {
-      print("wait stopped early\n");
+      printf("wait stopped early\n");
       exit(1);
     }
   }
 
   if (wait(0) != -1) {
-    print("wait got too many\n");
+    printf("wait got too many\n");
     exit(1);
   }
 
-  print("fork test OK\n");
+  printf("fork test OK\n");
 }
 
 int main(void) {

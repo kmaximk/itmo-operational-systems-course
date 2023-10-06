@@ -23,7 +23,9 @@ OBJS = \
   $K/sysfile.o \
   $K/kernelvec.o \
   $K/plic.o \
-  $K/virtio_disk.o
+  $K/virtio_disk.o \
+  $K/buddy.o \
+  $K/list.o
 
 OBJS_KCSAN = \
   $K/start.o \
@@ -126,7 +128,7 @@ $U/usys.o : $U/usys.S
 $U/_forktest: $U/forktest.o $(ULIB)
 	# forktest has less library code linked in - needs to be small
 	# in order to be able to max out the proc table.
-	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $U/_forktest $U/forktest.o $U/ulib.o $U/usys.o
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $U/_forktest $U/forktest.o $U/ulib.o $U/usys.o $U/printf.o
 	$(OBJDUMP) -S $U/_forktest > $U/forktest.asm
 
 mkfs/mkfs: mkfs/mkfs.c $K/fs.h $K/param.h
@@ -154,7 +156,8 @@ UPROGS=\
 	$U/_usertests\
 	$U/_grind\
 	$U/_wc\
-	$U/_zombie
+	$U/_zombie\
+	$U/_alloctest
 
 fs.img: mkfs/mkfs xv6-readme $(UPROGS)
 	mkfs/mkfs fs.img xv6-readme $(UPROGS)

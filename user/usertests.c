@@ -1847,10 +1847,9 @@ void iref(char *s) {
 }
 
 // test that fork fails gracefully
-// the forktest binary also does this, but it runs out of proc entries first.
-// inside the bigger usertests binary, we run out of memory first.
+// we should run out of either proc entries or memory here
 void forktest(char *s) {
-  enum { N = 1000 };
+  enum { N = 1500 };
   int n, pid;
 
   for (n = 0; n < N; n++) {
@@ -1865,7 +1864,7 @@ void forktest(char *s) {
   }
 
   if (n == N) {
-    printf("%s: fork claimed to work 1000 times!\n", s);
+    printf("%s: fork claimed to work 1500 times!\n", s);
     exit(1);
   }
 
@@ -2870,17 +2869,19 @@ int countfree() {
   return n;
 }
 
-int drivetests(int quick, int continuous, char *justone) {
+int drivetests(int mode, int continuous, char *justone) {
   do {
     printf("usertests starting\n");
     int free0 = countfree();
     int free1 = 0;
-    if (runtests(quicktests, justone, continuous)) {
-      if (continuous != 2) {
-        return 1;
+    if ((mode & 1) == 1) {
+      if (runtests(quicktests, justone, continuous)) {
+        if (continuous != 2) {
+          return 1;
+        }
       }
     }
-    if (!quick) {
+    if ((mode & 2) == 2) {
       if (justone == 0) printf("usertests slow tests starting\n");
       if (runtests(slowtests, justone, continuous)) {
         if (continuous != 2) {
@@ -2889,10 +2890,7 @@ int drivetests(int quick, int continuous, char *justone) {
       }
     }
     if ((free1 = countfree()) < free0) {
-      printf("FAILED -- lost some free pages %d (out of %d)\n", free1, free0);
-      if (continuous != 2) {
-        return 1;
-      }
+      printf("Lost some free pages: %d out of %d\n", free1, free0);
     }
   } while (continuous);
   return 0;
@@ -2900,22 +2898,28 @@ int drivetests(int quick, int continuous, char *justone) {
 
 int main(int argc, char *argv[]) {
   int continuous = 0;
-  int quick = 0;
+  int mode = 3;
   char *justone = 0;
 
   if (argc == 2 && strcmp(argv[1], "-q") == 0) {
-    quick = 1;
+    mode = 1;
   } else if (argc == 2 && strcmp(argv[1], "-c") == 0) {
     continuous = 1;
   } else if (argc == 2 && strcmp(argv[1], "-C") == 0) {
     continuous = 2;
+  } else if (argc == 2 && strcmp(argv[1], "-s") == 0) {
+    mode = 2;
   } else if (argc == 2 && argv[1][0] != '-') {
     justone = argv[1];
   } else if (argc > 1) {
-    printf("Usage: usertests [-c] [-C] [-q] [testname]\n");
+    printf("Usage: usertests [-c | -C | -q | -s] [testname]\n");
+    printf(" -c  run tests in a loop until they fail\n");
+    printf(" -C  run tests in a loop forever\n");
+    printf(" -q  run only fast tests\n");
+    printf(" -s  run only slow tests\n");
     exit(1);
   }
-  if (drivetests(quick, continuous, justone)) {
+  if (drivetests(mode, continuous, justone)) {
     exit(1);
   }
   printf("ALL TESTS PASSED\n");
