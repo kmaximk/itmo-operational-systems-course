@@ -16,7 +16,7 @@ void forktest(void) {
     exit(1);
   }
 
-  printf("fork test\n");
+  printf("forktest\n");
 
   for (n = 0; n < N; n++) {
     pid = fork();
@@ -37,11 +37,12 @@ void forktest(void) {
     exit(1);
   }
 
-  printf("forked %d processes\n", n);
+  printf("forked %d processes", n);
   if (n < NMIN) {
-    printf("- not enough\n");
+    printf(", not enough\n");
     exit(1);
   }
+  printf("\n");
 
   for (; n > 0; n--) {
     if (wait(0) < 0) {
@@ -55,7 +56,7 @@ void forktest(void) {
     exit(1);
   }
 
-  printf("fork test OK\n");
+  printf("forktest: OK\n");
 }
 
 int main(void) {

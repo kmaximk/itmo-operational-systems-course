@@ -157,7 +157,8 @@ UPROGS=\
 	$U/_grind\
 	$U/_wc\
 	$U/_zombie\
-	$U/_alloctest
+	$U/_alloctest\
+	$U/_reparenttest
 
 fs.img: mkfs/mkfs xv6-readme $(UPROGS)
 	mkfs/mkfs fs.img xv6-readme $(UPROGS)

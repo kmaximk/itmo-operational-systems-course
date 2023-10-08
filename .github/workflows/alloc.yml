@@ -75,16 +75,16 @@ jobs:
           name: xv6.out
           path: xv6.out.*
         if: ${{ failure() }}
-  forktest:
+  proctest:
     needs: tests
     runs-on: [self-hosted, os]
-    timeout-minutes: 6
-    name: "Bonus: fork"
+    timeout-minutes: 20
+    name: "Bonus: proc"
     steps:
       - name: "Checkout"
         uses: actions/checkout@v4
       - name: "Run tests"
-        run: ./grade-fork
+        run: ./grade-proc
       - name: "Upload logs"
         uses: actions/upload-artifact@v3
         with:
