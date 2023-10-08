@@ -1,10 +1,9 @@
 #include "kernel/fcntl.h"
 #include "kernel/memlayout.h"
-#include "kernel/param.h"
 #include "user/user.h"
 
 void test0() {
-  enum { NCHILD = 50, NFD = 10 };
+  enum { NCHILD = 50, NFD = 10, NFILE = 100 };
   int i, j;
   int fd;
 
