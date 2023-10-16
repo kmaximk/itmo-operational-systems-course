@@ -13,73 +13,44 @@
 #include "types.h"
 
 struct devsw devsw[NDEV];
-struct {
-  struct spinlock lock;
-  struct file *file;
-  int capacity;
-} ftable;
 
-void fileinit(void) {
-  ftable.file = bd_malloc(sizeof (struct file) * 8);
-  initlock(&ftable.lock, "ftable");
-  ftable.capacity = 8;
-}
 
 // Allocate a file structure.
 struct file *filealloc(void) {
   struct file *f;
   f = bd_malloc(sizeof(struct file));
   f->ref = 1;
+  initlock(&f->lock, "file");
   return f;
-//  acquire(&ftable.lock);
-//  for (f = ftable.file; f < ftable.file + ftable.capacity; f++) {
-//    if (f->ref == 0) {
-//      f->ref = 1;
-//      release(&ftable.lock);
-//      return f;
-//    }
-//  }
-//  struct *file temp_file = kalloc
-//  ftable.file = bd_malloc(sizeof(struct file) * 2 * ftable.capacity);
-//  memcmp(&temp_file, ftable.file, ftable.capacity);
-//  f = ftable.file + ftable.capacity;
-//  f->ref = 1;
-//  release(&ftable.lock);
-//  return 0;
 }
 
 // Increment ref count for file f.
 struct file *filedup(struct file *f) {
-  acquire(&ftable.lock);
+  acquire(&f->lock);
   if (f->ref < 1) panic("filedup");
   f->ref++;
-  release(&ftable.lock);
+  release(&f->lock);
   return f;
 }
 
 // Close file f.  (Decrement ref count, close when reaches 0.)
 void fileclose(struct file *f) {
-  struct file ff;
-
-  acquire(&ftable.lock);
+  acquire(&f->lock);
   if (f->ref < 1) panic("fileclose");
   if (--f->ref > 0) {
-    release(&ftable.lock);
+    release(&f->lock);
     return;
   }
-  ff = *f;
   f->ref = 0;
-  f->type = FD_NONE;
-  bd_free(f);
-  release(&ftable.lock);
-
-  if (ff.type == FD_PIPE) {
-    pipeclose(ff.pipe, ff.writable);
-  } else if (ff.type == FD_INODE || ff.type == FD_DEVICE) {
+  release(&f->lock);
+  if (f->type == FD_PIPE) {
+    pipeclose(f->pipe, f->writable);
+  } else if (f->type == FD_INODE || f->type == FD_DEVICE) {
     begin_op();
-    iput(ff.ip);
+    iput(f->ip);
     end_op();
   }
+  bd_free(f);
 }
 
 // Get metadata about file f.
