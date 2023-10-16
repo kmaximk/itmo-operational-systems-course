@@ -15,25 +15,37 @@
 struct devsw devsw[NDEV];
 struct {
   struct spinlock lock;
-  struct file file[NFILE];
+  struct file *file;
+  int capacity;
 } ftable;
 
-void fileinit(void) { initlock(&ftable.lock, "ftable"); }
+void fileinit(void) {
+  ftable.file = bd_malloc(sizeof (struct file) * 8);
+  initlock(&ftable.lock, "ftable");
+  ftable.capacity = 8;
+}
 
 // Allocate a file structure.
 struct file *filealloc(void) {
   struct file *f;
-
-  acquire(&ftable.lock);
-  for (f = ftable.file; f < ftable.file + NFILE; f++) {
-    if (f->ref == 0) {
-      f->ref = 1;
-      release(&ftable.lock);
-      return f;
-    }
-  }
-  release(&ftable.lock);
-  return 0;
+  f = bd_malloc(sizeof(struct file));
+  f->ref = 1;
+  return f;
+//  acquire(&ftable.lock);
+//  for (f = ftable.file; f < ftable.file + ftable.capacity; f++) {
+//    if (f->ref == 0) {
+//      f->ref = 1;
+//      release(&ftable.lock);
+//      return f;
+//    }
+//  }
+//  struct *file temp_file = kalloc
+//  ftable.file = bd_malloc(sizeof(struct file) * 2 * ftable.capacity);
+//  memcmp(&temp_file, ftable.file, ftable.capacity);
+//  f = ftable.file + ftable.capacity;
+//  f->ref = 1;
+//  release(&ftable.lock);
+//  return 0;
 }
 
 // Increment ref count for file f.
@@ -58,6 +70,7 @@ void fileclose(struct file *f) {
   ff = *f;
   f->ref = 0;
   f->type = FD_NONE;
+  bd_free(f);
   release(&ftable.lock);
 
   if (ff.type == FD_PIPE) {

@@ -27,6 +27,7 @@ struct sz_info {
   Bd_list free;
   char *alloc;
   char *split;
+  char *xor_alloc_pair;
 };
 typedef struct sz_info Sz_info;
 
@@ -53,6 +54,12 @@ void bit_clear(char *array, int index) {
   char b = array[index / 8];
   char m = (1 << (index % 8));
   array[index / 8] = (b & ~m);
+}
+
+void bit_reverse(char *array, int index) {
+  char b = array[index / 8];
+  char m = (1 << (index % 8));
+  array[index / 8] = (b ^ m);
 }
 
 // Print a bit vector as a list of ranges of 1 bits
@@ -129,7 +136,10 @@ void *bd_malloc(uint64 nbytes) {
 
   // Found a block; pop it and potentially split it.
   char *p = lst_pop(&bd_sizes[k].free);
+  int u = 43;
+  struct list *a = &u;
   bit_set(bd_sizes[k].alloc, blk_index(k, p));
+  bit_reverse(bd_sizes[k].xor_alloc_pair, blk_index(k, p) / 2);
   for (; k > fk; k--) {
     // split a block at size k and mark one half allocated at size k-1
     // and put the buddy on the free list at size k-1
