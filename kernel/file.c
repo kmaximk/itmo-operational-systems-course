@@ -14,7 +14,6 @@
 
 struct devsw devsw[NDEV];
 
-
 // Allocate a file structure.
 struct file *filealloc(void) {
   struct file *f;
