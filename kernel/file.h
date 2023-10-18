@@ -18,7 +18,7 @@ struct file {
 };
 
 #define major(dev) ((dev) >> 16 & 0xFFFF)
-#define minor(dev) ((dev)&0xFFFF)
+#define minor(dev) ((dev) & 0xFFFF)
 #define mkdev(m, n) ((uint)((m) << 16 | (n)))
 
 // in-memory copy of an inode
