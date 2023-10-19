@@ -21,6 +21,7 @@ struct file *filealloc(void) {
   if (f == 0) {
     return 0;
   }
+  memset(f, 0, sizeof(struct file));
   f->ref = 1;
   initlock(&f->lock, "file");
   return f;
