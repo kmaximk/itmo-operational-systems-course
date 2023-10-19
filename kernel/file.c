@@ -18,6 +18,9 @@ struct devsw devsw[NDEV];
 struct file *filealloc(void) {
   struct file *f;
   f = bd_malloc(sizeof(struct file));
+  if (f == 0) {
+    return 0;
+  }
   f->ref = 1;
   initlock(&f->lock, "file");
   return f;
