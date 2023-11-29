@@ -52,6 +52,27 @@ void usertrap(void) {
     intr_on();
 
     syscall();
+  } else if (r_scause() == 15) {
+    pte_t *pte;
+    uint64 stval = PGROUNDDOWN(r_stval());
+    if (stval >= MAXVA) {
+      printf("stval greater than maximum virtual address\n");
+      setkilled(p);
+    } else {
+      if ((pte = walk(p->pagetable, stval, 0)) == 0)
+        panic("usertrap: pte should exist");
+      if ((*pte & PTE_V) == 0) panic("usertrap: page not present");
+      if ((*pte & PTE_COW) != 0 && (*pte & PTE_W) == 0) {
+        if (copyonwrite(pte, p->pagetable, stval) != 0) {
+          printf("copyonwrite error\n");
+          setkilled(p);
+        }
+      } else {
+        printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
+        printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
+        setkilled(p);
+      }
+    }
   } else if ((which_dev = devintr()) != 0) {
     // ok
   } else {

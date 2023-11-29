@@ -19,3 +19,4 @@ xv6.out*
 /.cache
 .DS_Store
 __pycache__
+.idea

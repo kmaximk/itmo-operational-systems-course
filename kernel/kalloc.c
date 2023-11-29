@@ -8,6 +8,10 @@
 #include "spinlock.h"
 #include "types.h"
 
+#define POS(a)                        \
+  (PGROUNDDOWN((uint64)a) / PGSIZE) - \
+      (PGROUNDUP((uint64)ref_cnt.new_end) / PGSIZE)
+
 void freerange(void *pa_start, void *pa_end);
 
 extern char end[];  // first address after kernel.
@@ -22,9 +26,23 @@ struct {
   struct run *freelist;
 } kmem;
 
+struct {
+  struct spinlock lock;
+  uint32 *counter;
+  uint64 size;
+  uint64 new_end;
+} ref_cnt;
+
 void kinit() {
   initlock(&kmem.lock, "kmem");
-  freerange(end, (void *)PHYSTOP);
+  initlock(&ref_cnt.lock, "ref_cnt");
+  ref_cnt.counter = (uint32 *)end;
+  ref_cnt.size = (PHYSTOP - (uint64)end) / PGSIZE + 10;
+  ref_cnt.new_end = (uint64)end + ref_cnt.size * sizeof(*ref_cnt.counter);
+  for (int i = 0; i < ref_cnt.size; i++) {
+    ref_cnt.counter[i]++;
+  }
+  freerange((void *)ref_cnt.new_end, (void *)PHYSTOP);
 }
 
 void freerange(void *pa_start, void *pa_end) {
@@ -32,6 +50,19 @@ void freerange(void *pa_start, void *pa_end) {
   p = (char *)PGROUNDUP((uint64)pa_start);
   for (; p + PGSIZE <= (char *)pa_end; p += PGSIZE) kfree(p);
 }
+
+void counter_change(void *pa, int val) {
+  acquire(&ref_cnt.lock);
+  if (ref_cnt.counter[POS(pa)] == 1 && val == -1) {
+    release(&ref_cnt.lock);
+    kfree(pa);
+    return;
+  }
+  ref_cnt.counter[POS(pa)] += val;
+  release(&ref_cnt.lock);
+}
+
+uint32 counter_get(void *pa) { return ref_cnt.counter[POS(pa)]; }
 
 // Free the page of physical memory pointed at by pa,
 // which normally should have been returned by a
@@ -43,6 +74,13 @@ void kfree(void *pa) {
   if (((uint64)pa % PGSIZE) != 0 || (char *)pa < end || (uint64)pa >= PHYSTOP)
     panic("kfree");
 
+  acquire(&ref_cnt.lock);
+  ref_cnt.counter[POS(pa)]--;
+  if (ref_cnt.counter[POS(pa)] > 0) {
+    release(&ref_cnt.lock);
+    return;
+  }
+  release(&ref_cnt.lock);
   // Fill with junk to catch dangling refs.
   memset(pa, 1, PGSIZE);
 
@@ -64,6 +102,12 @@ void *kalloc(void) {
   r = kmem.freelist;
   if (r) kmem.freelist = r->next;
   release(&kmem.lock);
+
+  if (r) {
+    acquire(&ref_cnt.lock);
+    ref_cnt.counter[POS(r)] = 1;
+    release(&ref_cnt.lock);
+  }
 
   if (r) memset((char *)r, 5, PGSIZE);  // fill with junk
   return (void *)r;
