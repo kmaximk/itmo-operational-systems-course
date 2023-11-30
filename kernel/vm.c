@@ -261,7 +261,6 @@ void uvmfree(pagetable_t pagetable, uint64 sz) {
 int uvmcopy(pagetable_t old, pagetable_t new, uint64 sz) {
   pte_t *pte;
   uint64 i;
-  //  uint flags;
 
   for (i = 0; i < sz; i += PGSIZE) {
     if ((pte = walk(old, i, 0)) == 0) panic("uvmcopy: pte should exist");
@@ -306,9 +305,11 @@ int copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len) {
         ((*pte & PTE_W) == 0 && (*pte & PTE_COW) == 0))
       return -1;
     if ((*pte & PTE_W) == 0 && (*pte & PTE_COW)) {
-      copyonwrite(pte, pagetable, va0);
+      if (copyonwrite(pte, pagetable, va0) != 0) {
+        return -1;
+      }
+      pte = walk(pagetable, va0, 0);
     }
-    pte = walk(pagetable, va0, 0);
     if (pte == 0 || (*pte & PTE_V) == 0 || (*pte & PTE_U) == 0 ||
         (*pte & PTE_W) == 0)
       return -1;
@@ -385,31 +386,20 @@ int copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max) {
 }
 
 void vmprint(pagetable_t pagetable, int cnt) {
+  if (cnt == 1) {
+    printf("page table %p\n", pagetable);
+  }
   for (int i = 0; i < 512; i++) {
     pte_t pte = pagetable[i];
+    uint64 pa = PTE2PA(pte);
+    if (pte && PTE_V) {
+      for (int j = 0; j < cnt; j++) {
+        printf(" ..");
+      }
+      printf("%d: pte %p pa %p\n", i, pte, pa);
+    }
     if ((pte & PTE_V) && (pte & (PTE_R | PTE_W | PTE_X)) == 0) {
-      uint64 child = PTE2PA(pte);
-      for (int j = 0; j < cnt; j++) {
-        printf(".. ");
-      }
-      printf("%d ", i);
-      printf("pte: %x", pte);
-      printf(" pa: %x", child);
-      printf("\n");
-      vmprint((pagetable_t)child, cnt + 1);
-    } else if (pte & PTE_V) {
-      uint64 child = PTE2PA(pte);
-      for (int j = 0; j < cnt; j++) {
-        printf(".. ");
-      }
-      printf("%d ", i);
-      printf("pte:");
-      //      for (int j = 0; j < 64; j++) {
-      //        printf("%d", (pte >> j) & 1);
-      //      }
-      printf("%x", pte);
-      printf(" pa: %x", child);
-      printf("\n");
+      vmprint((pagetable_t)pa, cnt + 1);
     }
   }
 }

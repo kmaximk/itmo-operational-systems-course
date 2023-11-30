@@ -40,7 +40,7 @@ void kinit() {
   ref_cnt.size = (PHYSTOP - (uint64)end) / PGSIZE + 10;
   ref_cnt.new_end = (uint64)end + ref_cnt.size * sizeof(*ref_cnt.counter);
   for (int i = 0; i < ref_cnt.size; i++) {
-    ref_cnt.counter[i]++;
+    ref_cnt.counter[i] = 1;
   }
   freerange((void *)ref_cnt.new_end, (void *)PHYSTOP);
 }
