@@ -8,9 +8,9 @@
 #include "spinlock.h"
 #include "types.h"
 
-#define POS(a)                        \
-  (PGROUNDDOWN((uint64)a) / PGSIZE) - \
-      (PGROUNDUP((uint64)ref_cnt.new_end) / PGSIZE)
+#define POS(a) \
+  (PGROUNDDOWN((uint64)a) / PGSIZE) - (PGROUNDUP((uint64)end) / PGSIZE)
+
 
 void freerange(void *pa_start, void *pa_end);
 
@@ -28,27 +28,22 @@ struct {
 
 struct {
   struct spinlock lock;
-  uint32 *counter;
-  uint64 size;
-  uint64 new_end;
+  uint32 counter[PHYSTOP / PGSIZE];
 } ref_cnt;
 
 void kinit() {
   initlock(&kmem.lock, "kmem");
   initlock(&ref_cnt.lock, "ref_cnt");
-  ref_cnt.counter = (uint32 *)end;
-  ref_cnt.size = (PHYSTOP - (uint64)end) / PGSIZE + 10;
-  ref_cnt.new_end = (uint64)end + ref_cnt.size * sizeof(*ref_cnt.counter);
-  for (int i = 0; i < ref_cnt.size; i++) {
-    ref_cnt.counter[i] = 1;
-  }
-  freerange((void *)ref_cnt.new_end, (void *)PHYSTOP);
+  freerange((void *)end, (void *)PHYSTOP);
 }
 
 void freerange(void *pa_start, void *pa_end) {
   char *p;
   p = (char *)PGROUNDUP((uint64)pa_start);
-  for (; p + PGSIZE <= (char *)pa_end; p += PGSIZE) kfree(p);
+  for (; p + PGSIZE <= (char *)pa_end; p += PGSIZE) {
+    ref_cnt.counter[POS(p)] = 1;
+    kfree(p);
+  }
 }
 
 void counter_change(void *pa, int val) {
