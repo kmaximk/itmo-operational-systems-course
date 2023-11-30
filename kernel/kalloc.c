@@ -11,7 +11,6 @@
 #define POS(a) \
   (PGROUNDDOWN((uint64)a) / PGSIZE) - (PGROUNDUP((uint64)end) / PGSIZE)
 
-
 void freerange(void *pa_start, void *pa_end);
 
 extern char end[];  // first address after kernel.
