@@ -81,6 +81,7 @@ void kfree(void *pa) {
     return;
   }
   release(&ref_cnt.lock);
+
   // Fill with junk to catch dangling refs.
   memset(pa, 1, PGSIZE);
 
